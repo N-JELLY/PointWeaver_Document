@@ -1,9 +1,9 @@
-# PointWeaver Documentation
+# PointWeaver User Guide
 
-This repository hosts the GitHub Pages documentation site for PointWeaver.
+This repository hosts the GitHub Pages user guide for PointWeaver.
 
 - Site entry: `index.html`
-- Deployment: `.github/workflows/pages.yml`
-- Source application: https://github.com/N-JELLY/PointWeaver
+- Published URL: https://n-jelly.github.io/PointWeaver_Document/
+- Source application repository: https://github.com/N-JELLY/PointWeaver
 
-The Pages workflow publishes the static files from the repository root.
+The site is written as static HTML/CSS and is configured to publish from the `main` branch root.

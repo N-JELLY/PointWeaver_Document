@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PointWeaver Documentation</title>
+    <title>PointWeaver User Guide</title>
     <meta
       name="description"
-      content="PointWeaver MVPのドキュメント。Rust製ノードベース点群処理GUIの概要、使い方、式言語、設計、ロードマップ。"
+      content="PointWeaverをツールとして使うユーザー向けドキュメント。式ノードの構文、属性、関数、統計値、プレビュー方法を中心に解説します。"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -16,99 +16,126 @@
         <div class="brand">
           <div class="brand-mark">PW</div>
           <h1>PointWeaver</h1>
-          <p>Rust / egui / wgpu point cloud processing MVP</p>
+          <p>User guide and expression syntax reference</p>
         </div>
         <nav class="nav" aria-label="Documentation navigation">
-          <a href="#overview">概要</a>
-          <a href="#quickstart">クイックスタート</a>
-          <a href="#ui">画面構成</a>
-          <a href="#node-graph">ノードグラフ</a>
-          <a href="#expressions">式言語</a>
+          <a href="#start">はじめに</a>
+          <a href="#workflow">基本操作</a>
+          <a href="#expression-node">式ノード</a>
+          <a href="#syntax">構文の基本</a>
+          <a href="#attributes">属性</a>
+          <a href="#constants">統計値</a>
+          <a href="#operators">演算子</a>
+          <a href="#functions">関数</a>
+          <a href="#types">型と範囲</a>
+          <a href="#examples">式の例</a>
           <a href="#preview">プレビュー</a>
-          <a href="#data">点群データ</a>
-          <a href="#architecture">アーキテクチャ</a>
-          <a href="#formats">対応形式</a>
-          <a href="#troubleshooting">トラブルシュート</a>
-          <a href="#roadmap">ロードマップ</a>
+          <a href="#spreadsheet">スプレッドシート</a>
+          <a href="#errors">エラー表示</a>
         </nav>
       </aside>
 
       <div class="content">
         <header class="hero">
           <div class="hero-inner">
-            <div class="eyebrow">Point cloud node editor</div>
-            <h2>巨大点群を、ノードで組み替えて確認する。</h2>
+            <div class="eyebrow">User documentation</div>
+            <h2>PointWeaver式リファレンス</h2>
             <p>
-              PointWeaverは、Rustで実装されたWindows向けスタンドアロンの点群処理MVPです。
-              LAS/LAZ/PLY/PCDを読み込み、3Dビューで確認しながら、式ノードをワイヤー接続して処理を構築します。
+              このページは、PointWeaverを点群処理ツールとして使うユーザー向けのドキュメントです。
+              中心はExpressionノードに書く式の構文です。ノードをつなぎ、式を書き、
+              プレビューで確認しながら点群属性を変換します。
             </p>
             <div class="actions">
-              <a class="button primary" href="https://github.com/N-JELLY/PointWeaver">Source Repository</a>
-              <a class="button" href="#quickstart">Run Locally</a>
-              <a class="button" href="#expressions">Expression Language</a>
+              <a class="button primary" href="#syntax">構文を見る</a>
+              <a class="button" href="#functions">関数一覧</a>
+              <a class="button" href="#examples">サンプル式</a>
             </div>
           </div>
         </header>
 
         <main>
-          <section id="overview">
-            <h2>概要</h2>
+          <section id="start">
+            <h2>はじめに</h2>
+            <p>
+              PointWeaverでは、点群ファイルを開き、ノードグラフで処理を組み、3Dビューで結果を確認します。
+              ユーザーが主に編集するのはExpressionノードの中身です。
+            </p>
             <div class="grid">
               <div class="card">
-                <div class="kpi">GUI必須</div>
-                <h3>編集と確認を同じ画面で</h3>
-                <p>
-                  左カラムはエクスプレッションエディタ、右上は3Dプレビュー、右下はノードエディタです。
-                  スプレッドシートはメニューから別ウィンドウとして開きます。
-                </p>
+                <div class="kpi">1</div>
+                <h3>点群を開く</h3>
+                <p><strong>File &gt; Open Point Cloud...</strong> から LAS / LAZ / PLY / PCD を開きます。</p>
               </div>
               <div class="card">
-                <div class="kpi">Node</div>
-                <h3>ワイヤー接続で処理順を決定</h3>
-                <p>
-                  Source、Expression、Writerを接続します。ワイヤーのつなぎ替えにより、
-                  処理順とプレビュー対象を視覚的に変更できます。
-                </p>
+                <div class="kpi">2</div>
+                <h3>式を書く</h3>
+                <p>ノードエディタでExpressionノードを選び、左のエディタに複数行の代入式を書きます。</p>
               </div>
               <div class="card">
-                <div class="kpi">Chunk</div>
-                <h3>巨大点群を前提に分離</h3>
-                <p>
-                  LAS/LAZのエクスポートはチャンク単位で処理します。
-                  表示はサンプル/LOD寄りのプレビュー点群を使い、全点描画を避けます。
-                </p>
+                <div class="kpi">3</div>
+                <h3>確認して書き出す</h3>
+                <p>3Dプレビューやスプレッドシートで確認し、<strong>File &gt; Export...</strong> で書き出します。</p>
               </div>
             </div>
           </section>
 
-          <section id="quickstart">
-            <h2>クイックスタート</h2>
+          <section id="workflow">
+            <h2>基本操作</h2>
+            <table>
+              <thead>
+                <tr><th>やりたいこと</th><th>操作</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>点群ファイルを開く</td>
+                  <td><strong>File &gt; Open Point Cloud...</strong></td>
+                </tr>
+                <tr>
+                  <td>デモ点群を開く</td>
+                  <td><strong>File &gt; Demo</strong></td>
+                </tr>
+                <tr>
+                  <td>Expressionノードを追加する</td>
+                  <td><strong>Edit &gt; Add Expression Node</strong></td>
+                </tr>
+                <tr>
+                  <td>式の構文チェックをする</td>
+                  <td><strong>Edit &gt; Validate Expressions</strong></td>
+                </tr>
+                <tr>
+                  <td>プレビューを更新する</td>
+                  <td><strong>Edit &gt; Refresh Preview</strong></td>
+                </tr>
+                <tr>
+                  <td>点群を書き出す</td>
+                  <td><strong>File &gt; Set Output...</strong> で出力先を決め、<strong>File &gt; Export...</strong></td>
+                </tr>
+                <tr>
+                  <td>属性表を見る</td>
+                  <td><strong>View &gt; Geometry Spreadsheet</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="expression-node">
+            <h2>Expressionノード</h2>
             <p>
-              開発環境にはRust stableが必要です。リポジトリを取得したら、releaseビルドで実行します。
+              Expressionノードは、入力点群を受け取り、各点の属性を書き換えて出力します。
+              ノードを複数つなぐと、Sourceに近いノードから順番に式が実行されます。
             </p>
-            <pre><code>git clone https://github.com/N-JELLY/PointWeaver.git
-cd PointWeaver
-cargo run --release</code></pre>
-            <div class="callout">
-              Windowsで再ビルド時に <code>pointweaver.exe</code> の削除に失敗する場合は、
-              既に起動しているPointWeaverプロセスを終了してください。
-            </div>
-          </section>
-
-          <section id="ui">
-            <h2>画面構成</h2>
-            <div class="layout-demo" aria-label="PointWeaver layout diagram">
+            <div class="layout-demo" aria-label="PointWeaver user interface layout">
               <div class="pane">
                 <h3>Expression Editor</h3>
-                <p>選択中の式ノードを編集します。ノード一覧や統計情報はここには置きません。</p>
                 <pre><code>X = round(X)
 Y = round(Y)
-Z = round(Z)</code></pre>
+Z = round(Z)
+R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
               </div>
               <div class="right-stack">
                 <div class="pane preview">
-                  <h3>3D Preview</h3>
-                  <p>プレビュー右下の折りたたみパネルから、統計情報・サンプル数・点サイズ・ビュー操作を開きます。</p>
+                  <h3>Preview</h3>
+                  <p>式を反映した点群を3Dで確認します。</p>
                 </div>
                 <div class="pane graph">
                   <h3>Node Editor</h3>
@@ -117,75 +144,229 @@ Z = round(Z)</code></pre>
                     <div class="wire"></div>
                     <div class="node">Snap XYZ</div>
                     <div class="wire"></div>
-                    <div class="node">Height To Red</div>
+                    <div class="node">Colorize</div>
                     <div class="wire"></div>
                     <div class="node">Writer</div>
                   </div>
                 </div>
               </div>
             </div>
-            <h3>メニュー</h3>
-            <table>
-              <thead>
-                <tr><th>Menu</th><th>内容</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>File</td><td>点群を開く、プロジェクト保存/読込、デモ、出力先設定、エクスポート。</td></tr>
-                <tr><td>Edit</td><td>式ノード追加、選択ノード削除、式検証、プレビュー更新。</td></tr>
-                <tr><td>View</td><td>Auto Preview、Geometry Spreadsheet、ギズモ、ビュー方向、サンプル再読込。</td></tr>
-                <tr><td>Help</td><td>アプリ情報。</td></tr>
-              </tbody>
-            </table>
-          </section>
-
-          <section id="node-graph">
-            <h2>ノードグラフ</h2>
-            <div class="grid two">
-              <div class="card">
-                <h3>処理順</h3>
-                <p>
-                  MVPでは1本の直列パイプラインを前提にしています。
-                  SourceからWriterまでの接続を辿り、途中のExpressionノードを順番に実行します。
-                </p>
-              </div>
-              <div class="card">
-                <h3>接続操作</h3>
-                <p>
-                  ノード右側の出力ポートをクリックして接続開始、次ノード左側の入力ポートをクリックして接続します。
-                  入力ポートの右クリックで既存接続を外せます。
-                </p>
-              </div>
+            <div class="callout">
+              式は点ごとに文字列として再評価されるわけではありません。
+              実行前に構文チェックされ、内部表現に変換されてから点群に適用されます。
             </div>
-            <h3>基本パイプライン</h3>
-            <pre><code>Point Source -> Snap XYZ -> Height To Red -> Writer</code></pre>
           </section>
 
-          <section id="expressions">
-            <h2>式言語</h2>
+          <section id="syntax">
+            <h2>構文の基本</h2>
             <p>
-              式は実行前に一度パース/検証され、1点ごとに文字列評価されません。
-              属性はSoA形式のチャンクに対して読み書きされます。
+              1行に1つの代入式を書きます。左辺は書き換える属性、右辺は数値式です。
+              空行は無視されます。
             </p>
-            <h3>例</h3>
+            <pre><code>属性 = 式
+属性 = 式
+属性 = 式</code></pre>
+
+            <h3>最小例</h3>
+            <pre><code>Z = round(Z)</code></pre>
+            <p>
+              各点の <code>Z</code> を丸め、その値を同じ点の <code>Z</code> に書き戻します。
+            </p>
+
+            <h3>複数行</h3>
             <pre><code>X = round(X)
 Y = round(Y)
-Z = round(Z)
-R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
+Z = round(Z)</code></pre>
+            <p>
+              行は上から順番に実行されます。同じノード内で前の行が書き換えた値を、
+              後続行から参照できます。
+            </p>
+
+            <h3>コメントについて</h3>
+            <p>
+              現在のMVPではコメント構文はありません。説明を残したい場合は、
+              プロジェクト外のメモに残してください。
+            </p>
+          </section>
+
+          <section id="attributes">
+            <h2>属性</h2>
+            <p>
+              属性名は式の中で読み書きできます。大文字表記の座標・色属性と、
+              小文字の属性名を使います。
+            </p>
             <table>
               <thead>
-                <tr><th>種類</th><th>利用可能な名前</th></tr>
+                <tr><th>属性</th><th>意味</th><th>読み取り</th><th>代入</th><th>例</th></tr>
               </thead>
               <tbody>
-                <tr><td>属性</td><td><code>X Y Z R G B intensity classification</code></td></tr>
-                <tr><td>統計値</td><td><code>minX maxX minY maxY minZ maxZ</code></td></tr>
-                <tr><td>演算</td><td><code>+ - * / % &lt; &lt;= &gt; &gt;= == !=</code></td></tr>
-                <tr><td>関数</td><td><code>if round floor ceil clamp remap min max abs sqrt sin cos</code></td></tr>
+                <tr><td><code>X</code></td><td>X座標</td><td>可</td><td>可</td><td><code>X = round(X)</code></td></tr>
+                <tr><td><code>Y</code></td><td>Y座標</td><td>可</td><td>可</td><td><code>Y = Y + 10</code></td></tr>
+                <tr><td><code>Z</code></td><td>Z座標</td><td>可</td><td>可</td><td><code>Z = Z * 0.5</code></td></tr>
+                <tr><td><code>R</code></td><td>赤成分</td><td>可</td><td>可</td><td><code>R = 255</code></td></tr>
+                <tr><td><code>G</code></td><td>緑成分</td><td>可</td><td>可</td><td><code>G = remap(intensity, 0, 65535, 0, 255)</code></td></tr>
+                <tr><td><code>B</code></td><td>青成分</td><td>可</td><td>可</td><td><code>B = 64</code></td></tr>
+                <tr><td><code>intensity</code></td><td>反射強度</td><td>可</td><td>可</td><td><code>intensity = intensity * 1.2</code></td></tr>
+                <tr><td><code>classification</code></td><td>分類コード</td><td>可</td><td>可</td><td><code>classification = if(Z &gt; 10, 2, 1)</code></td></tr>
               </tbody>
             </table>
             <div class="callout">
-              <code>remap</code> は入力範囲外も外挿します。勝手なclampは行わないため、
-              制限したい場合は式側で <code>clamp(...)</code> を明示します。
+              属性名は現在の実装では上表の表記を使ってください。
+              例えば座標は <code>x</code> ではなく <code>X</code> です。
             </div>
+          </section>
+
+          <section id="constants">
+            <h2>統計値</h2>
+            <p>
+              式の中では、処理中の点群範囲を表す統計値を参照できます。
+              高さで色を付ける処理では <code>minZ</code> と <code>maxZ</code> をよく使います。
+            </p>
+            <table>
+              <thead>
+                <tr><th>名前</th><th>意味</th><th>例</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>minX</code></td><td>現在段階のX最小値</td><td><code>R = remap(X, minX, maxX, 0, 255)</code></td></tr>
+                <tr><td><code>maxX</code></td><td>現在段階のX最大値</td><td><code>R = remap(X, minX, maxX, 0, 255)</code></td></tr>
+                <tr><td><code>minY</code></td><td>現在段階のY最小値</td><td><code>G = remap(Y, minY, maxY, 0, 255)</code></td></tr>
+                <tr><td><code>maxY</code></td><td>現在段階のY最大値</td><td><code>G = remap(Y, minY, maxY, 0, 255)</code></td></tr>
+                <tr><td><code>minZ</code></td><td>現在段階のZ最小値</td><td><code>B = remap(Z, minZ, maxZ, 255, 0)</code></td></tr>
+                <tr><td><code>maxZ</code></td><td>現在段階のZ最大値</td><td><code>R = remap(Z, minZ, maxZ, 0, 255)</code></td></tr>
+              </tbody>
+            </table>
+            <p>
+              複数ノードをつないだ場合、後段ノードの統計値は前段ノードの処理結果を反映します。
+              例えば先に <code>Z = round(Z)</code> を実行した場合、次ノードの <code>minZ</code> /
+              <code>maxZ</code> は丸めた後のZ範囲になります。
+            </p>
+          </section>
+
+          <section id="operators">
+            <h2>演算子</h2>
+            <table>
+              <thead>
+                <tr><th>種類</th><th>演算子</th><th>例</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>加算</td><td><code>+</code></td><td><code>Z = Z + 1</code></td></tr>
+                <tr><td>減算</td><td><code>-</code></td><td><code>X = X - minX</code></td></tr>
+                <tr><td>乗算</td><td><code>*</code></td><td><code>Z = Z * 0.3048</code></td></tr>
+                <tr><td>除算</td><td><code>/</code></td><td><code>Z = Z / 1000</code></td></tr>
+                <tr><td>剰余</td><td><code>%</code></td><td><code>R = X % 255</code></td></tr>
+                <tr><td>比較</td><td><code>&lt; &lt;= &gt; &gt;= == !=</code></td><td><code>classification = if(Z &gt; 5, 2, 1)</code></td></tr>
+              </tbody>
+            </table>
+
+            <h3>比較式の値</h3>
+            <p>
+              比較式は条件として使います。主な用途は <code>if(condition, a, b)</code> の第1引数です。
+            </p>
+            <pre><code>R = if(Z &gt; 10, 255, 0)</code></pre>
+          </section>
+
+          <section id="functions">
+            <h2>関数</h2>
+            <p>
+              関数は <code>name(arg1, arg2, ...)</code> の形で呼び出します。
+              引数には属性、統計値、数値、別の関数呼び出しを書けます。
+            </p>
+            <table>
+              <thead>
+                <tr><th>関数</th><th>説明</th><th>例</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>round(x)</code></td><td>最も近い整数に丸めます。</td><td><code>Z = round(Z)</code></td></tr>
+                <tr><td><code>floor(x)</code></td><td>小さい側の整数へ丸めます。</td><td><code>Z = floor(Z)</code></td></tr>
+                <tr><td><code>ceil(x)</code></td><td>大きい側の整数へ丸めます。</td><td><code>Z = ceil(Z)</code></td></tr>
+                <tr><td><code>clamp(x, min, max)</code></td><td>値を範囲内に制限します。</td><td><code>R = clamp(R, 0, 255)</code></td></tr>
+                <tr><td><code>remap(x, inMin, inMax, outMin, outMax)</code></td><td>入力範囲を出力範囲へ線形変換します。</td><td><code>R = remap(Z, minZ, maxZ, 0, 255)</code></td></tr>
+                <tr><td><code>min(a, b)</code></td><td>小さい方を返します。</td><td><code>Z = min(Z, 100)</code></td></tr>
+                <tr><td><code>max(a, b)</code></td><td>大きい方を返します。</td><td><code>Z = max(Z, 0)</code></td></tr>
+                <tr><td><code>abs(x)</code></td><td>絶対値を返します。</td><td><code>R = abs(X)</code></td></tr>
+                <tr><td><code>sqrt(x)</code></td><td>平方根を返します。</td><td><code>R = sqrt(intensity)</code></td></tr>
+                <tr><td><code>sin(x)</code></td><td>サインを返します。単位はラジアンです。</td><td><code>Z = Z + sin(X)</code></td></tr>
+                <tr><td><code>cos(x)</code></td><td>コサインを返します。単位はラジアンです。</td><td><code>Z = Z + cos(Y)</code></td></tr>
+                <tr><td><code>if(condition, a, b)</code></td><td>条件が真なら <code>a</code>、偽なら <code>b</code> を返します。</td><td><code>R = if(Z &gt; 10, 255, 0)</code></td></tr>
+              </tbody>
+            </table>
+
+            <h3>remapの考え方</h3>
+            <pre><code>R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
+            <p>
+              <code>Z == minZ</code> の点は <code>R = 0</code>、
+              <code>Z == maxZ</code> の点は <code>R = 255</code> になります。
+              入力値が範囲外なら、その分だけ外挿されます。
+            </p>
+            <div class="callout">
+              <code>remap</code> は自動でclampしません。
+              0から255に収めたい場合は <code>clamp(remap(...), 0, 255)</code> と明示します。
+            </div>
+          </section>
+
+          <section id="types">
+            <h2>型と範囲</h2>
+            <p>
+              式は数値式として評価されます。代入先の属性に応じて保存時・表示時の扱いが変わります。
+            </p>
+            <table>
+              <thead>
+                <tr><th>代入先</th><th>扱い</th><th>注意</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>X Y Z</code></td>
+                  <td>座標値として扱います。</td>
+                  <td>小数を保持できます。グリッドに吸着したい場合は <code>round</code> などを使います。</td>
+                </tr>
+                <tr>
+                  <td><code>R G B</code></td>
+                  <td>表示色として扱います。</td>
+                  <td>プレビューでは0から255の色成分として表示されます。</td>
+                </tr>
+                <tr>
+                  <td><code>intensity</code></td>
+                  <td>反射強度として扱います。</td>
+                  <td>ファイル形式により保存可能な範囲が異なります。</td>
+                </tr>
+                <tr>
+                  <td><code>classification</code></td>
+                  <td>分類コードとして扱います。</td>
+                  <td>整数コードを入れる用途を想定しています。</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="examples">
+            <h2>式の例</h2>
+
+            <h3>座標を1mグリッドへスナップ</h3>
+            <pre><code>X = round(X)
+Y = round(Y)
+Z = round(Z)</code></pre>
+
+            <h3>Z高さを赤色に割り当て</h3>
+            <pre><code>R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
+
+            <h3>高さで赤から青へグラデーション</h3>
+            <pre><code>R = remap(Z, minZ, maxZ, 0, 255)
+G = 0
+B = remap(Z, minZ, maxZ, 255, 0)</code></pre>
+
+            <h3>指定高さより上だけ分類を変更</h3>
+            <pre><code>classification = if(Z &gt; 10, 2, classification)</code></pre>
+
+            <h3>反射強度をグレースケール表示</h3>
+            <pre><code>R = remap(intensity, 0, 65535, 0, 255)
+G = remap(intensity, 0, 65535, 0, 255)
+B = remap(intensity, 0, 65535, 0, 255)</code></pre>
+
+            <h3>Z方向を誇張</h3>
+            <pre><code>Z = Z * 2</code></pre>
+
+            <h3>波形を加える</h3>
+            <pre><code>Z = Z + sin(X * 0.1) * 2</code></pre>
           </section>
 
           <section id="preview">
@@ -194,119 +375,77 @@ R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
               <div class="card">
                 <h3>Final Output</h3>
                 <p>
-                  全Expressionノードを通した最終結果を表示します。通常の確認モードです。
+                  ノードグラフ上のExpressionノードを最後まで実行した状態を表示します。
+                  通常はこちらで最終結果を確認します。
                 </p>
               </div>
               <div class="card">
                 <h3>Selected Stage</h3>
                 <p>
-                  ノードエディター右上のボタンで切り替えます。
-                  選択中の式ノードまで処理した途中段階を表示できます。
+                  ノードエディタ右上のボタンで切り替えます。
+                  選択中のExpressionノードまで処理した途中結果を表示します。
                 </p>
               </div>
             </div>
             <p>
-              プレビュー点数、描画上限、点サイズは3Dプレビュー右下の折りたたみパネルから調整できます。
-              Z方向や原点はギズモで確認できます。
+              3Dプレビュー右下の <strong>Preview Controls</strong> を開くと、
+              プレビューサンプル数、描画上限、点サイズ、ビュー方向、ギズモ表示を調整できます。
             </p>
           </section>
 
-          <section id="data">
-            <h2>処理データと表示データ</h2>
+          <section id="spreadsheet">
+            <h2>Geometry Spreadsheet</h2>
             <p>
-              本体処理はチャンク単位、表示はプレビュー用サンプル点群として扱います。
-              これにより、数千万から数億点規模のファイルでもGUIスレッドを止めずに扱う設計へ拡張しやすくしています。
+              <strong>View &gt; Geometry Spreadsheet</strong> から別ウィンドウで開きます。
+              点ごとの <code>ptnum</code>、座標、色、反射強度、分類を表で確認できます。
             </p>
             <table>
               <thead>
-                <tr><th>用途</th><th>データ</th><th>方針</th></tr>
+                <tr><th>機能</th><th>説明</th></tr>
               </thead>
               <tbody>
-                <tr><td>処理</td><td>PointChunk</td><td>SoA形式。属性ごとに配列を持ち、チャンク単位で並列処理。</td></tr>
-                <tr><td>表示</td><td>PreviewCloud</td><td>サンプル/LOD用。描画上限を設け、全点を一度に描かない。</td></tr>
-                <tr><td>統計</td><td>Stats / Bounds</td><td>式ノードごとに必要な範囲値を渡す。</td></tr>
+                <tr><td>Preview / Source</td><td>処理後プレビューと元サンプルを切り替えます。</td></tr>
+                <tr><td>Start / Rows</td><td>表示開始行と表示行数を調整します。</td></tr>
+                <tr><td>ptnum Go</td><td>指定した点番号へ移動します。現在のサンプルに含まれる点だけ対象です。</td></tr>
+                <tr><td>Frame Selected</td><td>選択した点へ3Dビューを寄せます。</td></tr>
               </tbody>
             </table>
           </section>
 
-          <section id="architecture">
-            <h2>アーキテクチャ</h2>
-            <div class="grid">
-              <div class="card">
-                <h3>UI</h3>
-                <p><code>eframe/egui</code> を使い、メニュー、エディタ、ノードキャンバス、スプレッドシートを構成します。</p>
-              </div>
-              <div class="card">
-                <h3>3Dビュー</h3>
-                <p>現在はegui PainterベースのMVP表示です。将来の本格表示はwgpu点描画パイプラインに分離します。</p>
-              </div>
-              <div class="card">
-                <h3>Pipeline</h3>
-                <p>GraphDocumentから処理順を決定し、CompiledPipelineが式Programをチャンクへ適用します。</p>
-              </div>
-            </div>
-            <pre><code>GUI Thread
-  -> GraphDocument
-  -> CompiledPipeline
-  -> SourceCloud / PreviewCloud
-  -> Export Worker
-  -> PointCloud Writer</code></pre>
-          </section>
-
-          <section id="formats">
-            <h2>対応形式</h2>
+          <section id="errors">
+            <h2>エラー表示</h2>
+            <p>
+              式に問題がある場合、エディタ下部に行番号・列番号つきで表示されます。
+              ノードキャンバス上では、問題のあるノードに警告表示が付きます。
+            </p>
             <table>
               <thead>
-                <tr><th>形式</th><th>読み込み</th><th>書き出し</th><th>備考</th></tr>
+                <tr><th>よくある原因</th><th>修正例</th></tr>
               </thead>
               <tbody>
-                <tr><td>LAS</td><td>対応</td><td>対応</td><td>チャンク処理の主経路。</td></tr>
-                <tr><td>LAZ</td><td>対応</td><td>対応</td><td><code>las</code> crateのLAZ機能を利用。</td></tr>
-                <tr><td>PLY</td><td>ASCII対応</td><td>ASCII対応</td><td>MVP範囲。巨大ファイル向けチャンクReaderは今後。</td></tr>
-                <tr><td>PCD</td><td>ASCII対応</td><td>ASCII対応</td><td>MVP範囲。binary/compressedは今後。</td></tr>
-                <tr><td>COPC</td><td>限定的</td><td>未対応</td><td>LAZとして順次読める場合のみ。タイル/LODアクセスは今後。</td></tr>
+                <tr>
+                  <td>存在しない属性名を使った</td>
+                  <td><code>x</code> ではなく <code>X</code> を使います。</td>
+                </tr>
+                <tr>
+                  <td>関数名を間違えた</td>
+                  <td><code>rempa</code> ではなく <code>remap</code> を使います。</td>
+                </tr>
+                <tr>
+                  <td>関数の引数が足りない</td>
+                  <td><code>remap(Z, minZ, maxZ, 0, 255)</code> のように必要な引数をすべて書きます。</td>
+                </tr>
+                <tr>
+                  <td>代入先が属性ではない</td>
+                  <td><code>minZ = 0</code> のような統計値への代入はできません。</td>
+                </tr>
               </tbody>
             </table>
-          </section>
-
-          <section id="troubleshooting">
-            <h2>トラブルシュート</h2>
-            <h3>ビルド時にアクセス拒否される</h3>
-            <p>
-              Windowsでは実行中の <code>pointweaver.exe</code> があると、Cargoがrelease exeを上書きできません。
-              タスクマネージャーかPowerShellで終了します。
-            </p>
-            <pre><code>Get-Process pointweaver -ErrorAction SilentlyContinue | Stop-Process</code></pre>
-
-            <h3>黒い点が出る</h3>
-            <p>
-              色属性の範囲、式の出力、デモデータの色生成を確認してください。
-              MVPではR/G/Bはプレビュー上で8bit表示されます。
-            </p>
-
-            <h3>プレビューが少ない/重い</h3>
-            <p>
-              Preview Controlsからサンプル数、Draw limit、Point sizeを調整してください。
-              巨大点群では処理データと表示データを分けて考えるのが基本です。
-            </p>
-          </section>
-
-          <section id="roadmap">
-            <h2>ロードマップ</h2>
-            <ul class="roadmap">
-              <li>PLY/PCD binary対応とチャンクReader/Writer。</li>
-              <li>COPCのタイル/LOD読み込み、オクツリー/タイルキャッシュ。</li>
-              <li>wgpuによる本格点群レンダラ、点サイズ/属性色/選択表示のGPU化。</li>
-              <li>式言語ASTからWGSL/SPIR-V相当への変換。</li>
-              <li>GPU Computeバックエンド、CPU/GPU実行バックエンド切替。</li>
-              <li>プラグインAPI、Python連携、カスタムノードの外部拡張。</li>
-              <li>複数入力ノード、分岐/合流、キャッシュ制御、ジョブキュー。</li>
-            </ul>
           </section>
         </main>
 
         <footer class="footer">
-          PointWeaver Documentation. Built as a static GitHub Pages site.
+          PointWeaver User Guide. Focused on expression syntax and day-to-day tool usage.
         </footer>
       </div>
     </div>
