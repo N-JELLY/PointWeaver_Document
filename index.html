@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PointWeaver Documentation</title>
+    <meta
+      name="description"
+      content="PointWeaver MVPのドキュメント。Rust製ノードベース点群処理GUIの概要、使い方、式言語、設計、ロードマップ。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">PW</div>
+          <h1>PointWeaver</h1>
+          <p>Rust / egui / wgpu point cloud processing MVP</p>
+        </div>
+        <nav class="nav" aria-label="Documentation navigation">
+          <a href="#overview">概要</a>
+          <a href="#quickstart">クイックスタート</a>
+          <a href="#ui">画面構成</a>
+          <a href="#node-graph">ノードグラフ</a>
+          <a href="#expressions">式言語</a>
+          <a href="#preview">プレビュー</a>
+          <a href="#data">点群データ</a>
+          <a href="#architecture">アーキテクチャ</a>
+          <a href="#formats">対応形式</a>
+          <a href="#troubleshooting">トラブルシュート</a>
+          <a href="#roadmap">ロードマップ</a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <header class="hero">
+          <div class="hero-inner">
+            <div class="eyebrow">Point cloud node editor</div>
+            <h2>巨大点群を、ノードで組み替えて確認する。</h2>
+            <p>
+              PointWeaverは、Rustで実装されたWindows向けスタンドアロンの点群処理MVPです。
+              LAS/LAZ/PLY/PCDを読み込み、3Dビューで確認しながら、式ノードをワイヤー接続して処理を構築します。
+            </p>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/N-JELLY/PointWeaver">Source Repository</a>
+              <a class="button" href="#quickstart">Run Locally</a>
+              <a class="button" href="#expressions">Expression Language</a>
+            </div>
+          </div>
+        </header>
+
+        <main>
+          <section id="overview">
+            <h2>概要</h2>
+            <div class="grid">
+              <div class="card">
+                <div class="kpi">GUI必須</div>
+                <h3>編集と確認を同じ画面で</h3>
+                <p>
+                  左カラムはエクスプレッションエディタ、右上は3Dプレビュー、右下はノードエディタです。
+                  スプレッドシートはメニューから別ウィンドウとして開きます。
+                </p>
+              </div>
+              <div class="card">
+                <div class="kpi">Node</div>
+                <h3>ワイヤー接続で処理順を決定</h3>
+                <p>
+                  Source、Expression、Writerを接続します。ワイヤーのつなぎ替えにより、
+                  処理順とプレビュー対象を視覚的に変更できます。
+                </p>
+              </div>
+              <div class="card">
+                <div class="kpi">Chunk</div>
+                <h3>巨大点群を前提に分離</h3>
+                <p>
+                  LAS/LAZのエクスポートはチャンク単位で処理します。
+                  表示はサンプル/LOD寄りのプレビュー点群を使い、全点描画を避けます。
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="quickstart">
+            <h2>クイックスタート</h2>
+            <p>
+              開発環境にはRust stableが必要です。リポジトリを取得したら、releaseビルドで実行します。
+            </p>
+            <pre><code>git clone https://github.com/N-JELLY/PointWeaver.git
+cd PointWeaver
+cargo run --release</code></pre>
+            <div class="callout">
+              Windowsで再ビルド時に <code>pointweaver.exe</code> の削除に失敗する場合は、
+              既に起動しているPointWeaverプロセスを終了してください。
+            </div>
+          </section>
+
+          <section id="ui">
+            <h2>画面構成</h2>
+            <div class="layout-demo" aria-label="PointWeaver layout diagram">
+              <div class="pane">
+                <h3>Expression Editor</h3>
+                <p>選択中の式ノードを編集します。ノード一覧や統計情報はここには置きません。</p>
+                <pre><code>X = round(X)
+Y = round(Y)
+Z = round(Z)</code></pre>
+              </div>
+              <div class="right-stack">
+                <div class="pane preview">
+                  <h3>3D Preview</h3>
+                  <p>プレビュー右下の折りたたみパネルから、統計情報・サンプル数・点サイズ・ビュー操作を開きます。</p>
+                </div>
+                <div class="pane graph">
+                  <h3>Node Editor</h3>
+                  <div class="node-row">
+                    <div class="node">Source</div>
+                    <div class="wire"></div>
+                    <div class="node">Snap XYZ</div>
+                    <div class="wire"></div>
+                    <div class="node">Height To Red</div>
+                    <div class="wire"></div>
+                    <div class="node">Writer</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <h3>メニュー</h3>
+            <table>
+              <thead>
+                <tr><th>Menu</th><th>内容</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>File</td><td>点群を開く、プロジェクト保存/読込、デモ、出力先設定、エクスポート。</td></tr>
+                <tr><td>Edit</td><td>式ノード追加、選択ノード削除、式検証、プレビュー更新。</td></tr>
+                <tr><td>View</td><td>Auto Preview、Geometry Spreadsheet、ギズモ、ビュー方向、サンプル再読込。</td></tr>
+                <tr><td>Help</td><td>アプリ情報。</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="node-graph">
+            <h2>ノードグラフ</h2>
+            <div class="grid two">
+              <div class="card">
+                <h3>処理順</h3>
+                <p>
+                  MVPでは1本の直列パイプラインを前提にしています。
+                  SourceからWriterまでの接続を辿り、途中のExpressionノードを順番に実行します。
+                </p>
+              </div>
+              <div class="card">
+                <h3>接続操作</h3>
+                <p>
+                  ノード右側の出力ポートをクリックして接続開始、次ノード左側の入力ポートをクリックして接続します。
+                  入力ポートの右クリックで既存接続を外せます。
+                </p>
+              </div>
+            </div>
+            <h3>基本パイプライン</h3>
+            <pre><code>Point Source -> Snap XYZ -> Height To Red -> Writer</code></pre>
+          </section>
+
+          <section id="expressions">
+            <h2>式言語</h2>
+            <p>
+              式は実行前に一度パース/検証され、1点ごとに文字列評価されません。
+              属性はSoA形式のチャンクに対して読み書きされます。
+            </p>
+            <h3>例</h3>
+            <pre><code>X = round(X)
+Y = round(Y)
+Z = round(Z)
+R = remap(Z, minZ, maxZ, 0, 255)</code></pre>
+            <table>
+              <thead>
+                <tr><th>種類</th><th>利用可能な名前</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>属性</td><td><code>X Y Z R G B intensity classification</code></td></tr>
+                <tr><td>統計値</td><td><code>minX maxX minY maxY minZ maxZ</code></td></tr>
+                <tr><td>演算</td><td><code>+ - * / % &lt; &lt;= &gt; &gt;= == !=</code></td></tr>
+                <tr><td>関数</td><td><code>if round floor ceil clamp remap min max abs sqrt sin cos</code></td></tr>
+              </tbody>
+            </table>
+            <div class="callout">
+              <code>remap</code> は入力範囲外も外挿します。勝手なclampは行わないため、
+              制限したい場合は式側で <code>clamp(...)</code> を明示します。
+            </div>
+          </section>
+
+          <section id="preview">
+            <h2>プレビュー</h2>
+            <div class="grid two">
+              <div class="card">
+                <h3>Final Output</h3>
+                <p>
+                  全Expressionノードを通した最終結果を表示します。通常の確認モードです。
+                </p>
+              </div>
+              <div class="card">
+                <h3>Selected Stage</h3>
+                <p>
+                  ノードエディター右上のボタンで切り替えます。
+                  選択中の式ノードまで処理した途中段階を表示できます。
+                </p>
+              </div>
+            </div>
+            <p>
+              プレビュー点数、描画上限、点サイズは3Dプレビュー右下の折りたたみパネルから調整できます。
+              Z方向や原点はギズモで確認できます。
+            </p>
+          </section>
+
+          <section id="data">
+            <h2>処理データと表示データ</h2>
+            <p>
+              本体処理はチャンク単位、表示はプレビュー用サンプル点群として扱います。
+              これにより、数千万から数億点規模のファイルでもGUIスレッドを止めずに扱う設計へ拡張しやすくしています。
+            </p>
+            <table>
+              <thead>
+                <tr><th>用途</th><th>データ</th><th>方針</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>処理</td><td>PointChunk</td><td>SoA形式。属性ごとに配列を持ち、チャンク単位で並列処理。</td></tr>
+                <tr><td>表示</td><td>PreviewCloud</td><td>サンプル/LOD用。描画上限を設け、全点を一度に描かない。</td></tr>
+                <tr><td>統計</td><td>Stats / Bounds</td><td>式ノードごとに必要な範囲値を渡す。</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="architecture">
+            <h2>アーキテクチャ</h2>
+            <div class="grid">
+              <div class="card">
+                <h3>UI</h3>
+                <p><code>eframe/egui</code> を使い、メニュー、エディタ、ノードキャンバス、スプレッドシートを構成します。</p>
+              </div>
+              <div class="card">
+                <h3>3Dビュー</h3>
+                <p>現在はegui PainterベースのMVP表示です。将来の本格表示はwgpu点描画パイプラインに分離します。</p>
+              </div>
+              <div class="card">
+                <h3>Pipeline</h3>
+                <p>GraphDocumentから処理順を決定し、CompiledPipelineが式Programをチャンクへ適用します。</p>
+              </div>
+            </div>
+            <pre><code>GUI Thread
+  -> GraphDocument
+  -> CompiledPipeline
+  -> SourceCloud / PreviewCloud
+  -> Export Worker
+  -> PointCloud Writer</code></pre>
+          </section>
+
+          <section id="formats">
+            <h2>対応形式</h2>
+            <table>
+              <thead>
+                <tr><th>形式</th><th>読み込み</th><th>書き出し</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>LAS</td><td>対応</td><td>対応</td><td>チャンク処理の主経路。</td></tr>
+                <tr><td>LAZ</td><td>対応</td><td>対応</td><td><code>las</code> crateのLAZ機能を利用。</td></tr>
+                <tr><td>PLY</td><td>ASCII対応</td><td>ASCII対応</td><td>MVP範囲。巨大ファイル向けチャンクReaderは今後。</td></tr>
+                <tr><td>PCD</td><td>ASCII対応</td><td>ASCII対応</td><td>MVP範囲。binary/compressedは今後。</td></tr>
+                <tr><td>COPC</td><td>限定的</td><td>未対応</td><td>LAZとして順次読める場合のみ。タイル/LODアクセスは今後。</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="troubleshooting">
+            <h2>トラブルシュート</h2>
+            <h3>ビルド時にアクセス拒否される</h3>
+            <p>
+              Windowsでは実行中の <code>pointweaver.exe</code> があると、Cargoがrelease exeを上書きできません。
+              タスクマネージャーかPowerShellで終了します。
+            </p>
+            <pre><code>Get-Process pointweaver -ErrorAction SilentlyContinue | Stop-Process</code></pre>
+
+            <h3>黒い点が出る</h3>
+            <p>
+              色属性の範囲、式の出力、デモデータの色生成を確認してください。
+              MVPではR/G/Bはプレビュー上で8bit表示されます。
+            </p>
+
+            <h3>プレビューが少ない/重い</h3>
+            <p>
+              Preview Controlsからサンプル数、Draw limit、Point sizeを調整してください。
+              巨大点群では処理データと表示データを分けて考えるのが基本です。
+            </p>
+          </section>
+
+          <section id="roadmap">
+            <h2>ロードマップ</h2>
+            <ul class="roadmap">
+              <li>PLY/PCD binary対応とチャンクReader/Writer。</li>
+              <li>COPCのタイル/LOD読み込み、オクツリー/タイルキャッシュ。</li>
+              <li>wgpuによる本格点群レンダラ、点サイズ/属性色/選択表示のGPU化。</li>
+              <li>式言語ASTからWGSL/SPIR-V相当への変換。</li>
+              <li>GPU Computeバックエンド、CPU/GPU実行バックエンド切替。</li>
+              <li>プラグインAPI、Python連携、カスタムノードの外部拡張。</li>
+              <li>複数入力ノード、分岐/合流、キャッシュ制御、ジョブキュー。</li>
+            </ul>
+          </section>
+        </main>
+
+        <footer class="footer">
+          PointWeaver Documentation. Built as a static GitHub Pages site.
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
